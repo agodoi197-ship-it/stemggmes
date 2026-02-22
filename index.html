@@ -3,216 +3,233 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Precinho Games</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+<title>EBMG Games</title>
 
 <style>
 body{
-margin:0;
-font-family:'Poppins',sans-serif;
-background:linear-gradient(135deg,#0f0f0f,#1a0000);
-color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
+  margin:0;
+  font-family:Arial;
+  background:#0f0f0f;
+  color:white;
+  text-align:center;
 }
 
-.card{
-background:#111;
-padding:30px;
-border-radius:20px;
-width:380px;
-text-align:center;
-box-shadow:0 0 40px red;
+.container{
+  margin-top:80px;
 }
 
-h1{margin-bottom:10px;}
-
-.preco{
-font-size:40px;
-color:#ff0000;
-font-weight:800;
-margin:10px 0;
+button{
+  padding:12px 25px;
+  margin:10px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
 }
 
-.preco-antigo{
-text-decoration:line-through;
-color:#777;
-font-size:18px;
+.buy{
+  background:#00ff88;
 }
 
-.botao{
-background:linear-gradient(45deg,#ff0000,#8b0000);
-border:none;
-padding:15px;
-width:100%;
-color:white;
-font-weight:bold;
-border-radius:10px;
-cursor:pointer;
-margin-bottom:10px;
+.admin-btn{
+  background:#444;
+  position:fixed;
+  bottom:20px;
+  right:20px;
 }
 
-#pagamento{display:none;margin-top:20px;}
+.hidden{
+  display:none;
+}
+
+.admin-panel{
+  background:#1a1a1a;
+  padding:20px;
+  margin-top:20px;
+  border-radius:10px;
+  width:90%;
+  max-width:500px;
+  margin-left:auto;
+  margin-right:auto;
+}
 
 input{
-padding:10px;
-border-radius:8px;
-border:none;
-width:100%;
-margin-bottom:10px;
-}
-
-#adminPanel{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:#000;
-color:white;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-}
-
-.admin-box{
-background:#111;
-padding:30px;
-border-radius:15px;
-width:350px;
-text-align:center;
-box-shadow:0 0 30px red;
+  padding:8px;
+  margin:5px;
+  border-radius:6px;
+  border:none;
 }
 </style>
 </head>
 <body>
 
-<div class="card">
-<h1>🎮 Precinho Games</h1>
+<div class="container">
+  <h1>EBMG Games</h1>
+  <h2 id="price">R$ 49,90</h2>
 
-<div id="precoArea">
-<div id="precoAntigo" class="preco-antigo"></div>
-<div id="preco" class="preco">R$ 49,90</div>
+  <input type="text" id="couponInput" placeholder="Cupom de desconto">
+  <button onclick="applyCoupon()">Aplicar Cupom</button>
+
+  <br>
+  <button class="buy" onclick="buy()">Comprar Agora</button>
+
+  <div id="paymentArea" class="hidden">
+    <h3>Pagamento via Pix</h3>
+
+    <p><strong>Chave Pix:</strong></p>
+    <input type="text" value="7fdb18d2-069d-4454-8ec7-09f52ac4efdc" id="pixKey" readonly>
+    <button onclick="copyPix()">Copiar</button>
+
+    <br><br>
+
+    <a id="whatsappLink" target="_blank">
+      <button style="background:#25D366;">Enviar Comprovante</button>
+    </a>
+  </div>
 </div>
 
-<input type="text" id="cupomInput" placeholder="Cupom de desconto">
-<button class="botao" onclick="aplicarCupom()">Aplicar Cupom</button>
+<button class="admin-btn" onclick="openAdmin()">Admin</button>
 
-<button class="botao" onclick="comprarAgora()">Comprar Agora</button>
-
-<div id="pagamento">
-<h3>Pague via Pix</h3>
-<img id="qr" width="200">
-<button class="botao" onclick="copiarPix()">Copiar Pix</button>
-</div>
+<div id="adminLogin" class="hidden admin-panel">
+  <h3>Login Admin</h3>
+  <input type="password" id="adminPass" placeholder="Senha">
+  <button onclick="loginAdmin()">Entrar</button>
 </div>
 
-<!-- PAINEL ADMIN -->
-<div id="adminPanel">
-<div class="admin-box">
-<h2>Painel Admin</h2>
+<div id="adminPanel" class="hidden admin-panel">
+  <h3>Painel Admin</h3>
 
-<p>Total de Cliques:</p>
-<h1 id="totalCliques">0</h1>
+  <p>Total cliques em Comprar: <span id="clickCount">0</span></p>
 
-<hr>
+  <h4>Criar Cupom</h4>
+  <input type="text" id="newCouponName" placeholder="Nome do cupom">
+  <input type="number" id="newCouponValue" placeholder="% desconto">
+  <input type="number" id="newCouponDays" placeholder="Validade (dias)">
+  <button onclick="createCoupon()">Criar</button>
 
-<h3>Criar / Atualizar Cupom</h3>
-<input type="text" id="novoCupom" placeholder="Nome do cupom">
-<input type="number" id="descontoCupom" placeholder="Desconto %">
+  <h4>Cupons Ativos</h4>
+  <div id="couponList"></div>
 
-<button class="botao" onclick="salvarCupom()">Salvar Cupom</button>
-<button class="botao" onclick="removerCupom()">Remover Cupom</button>
-
-<br><br>
-<button class="botao" onclick="fecharAdmin()">Fechar</button>
-</div>
+  <button onclick="logoutAdmin()">Sair</button>
 </div>
 
 <script>
 
-const pixCode = `00020126820014BR.GOV.BCB.PIX01367fdb18d2-069d-4454-8ec7-09f52ac4efdc0220obrigado por comprar520400005303986540549.905802BR5921Arthur Souza de Godoi6009SAO PAULO62140510ePQRZNqX8A6304CA0D`;
+let price = 49.90
+let clicks = localStorage.getItem("clicks") || 0
+let coupons = JSON.parse(localStorage.getItem("coupons")) || {}
 
-let precoOriginal = 49.90;
-let precoAtual = precoOriginal;
+document.getElementById("clickCount").innerText = clicks
+updateCouponList()
 
-// INICIAR
-if(!localStorage.getItem("cliques")) localStorage.setItem("cliques","0");
+// CONFIGURE SEU NÚMERO AQUI (sem espaço e sem traço)
+let whatsappNumber = "5566999761232"
 
-function atualizarPreco(){
-document.getElementById("preco").innerText = "R$ " + precoAtual.toFixed(2);
+function buy(){
+  clicks++
+  localStorage.setItem("clicks", clicks)
+  document.getElementById("clickCount").innerText = clicks
+
+  let message = "Olá, fiz o pagamento e segue o comprovante."
+  document.getElementById("whatsappLink").href =
+    "https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(message)
+
+  document.getElementById("paymentArea").classList.remove("hidden")
 }
 
-function comprarAgora(){
-let c = parseInt(localStorage.getItem("cliques"));
-localStorage.setItem("cliques",c+1);
-
-document.getElementById("pagamento").style.display="block";
-document.getElementById("qr").src=
-`https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(pixCode)}`;
+function copyPix(){
+  let pix = document.getElementById("pixKey")
+  pix.select()
+  document.execCommand("copy")
+  alert("Chave Pix copiada!")
 }
 
-function copiarPix(){
-navigator.clipboard.writeText(pixCode);
-alert("Pix copiado!");
+function applyCoupon(){
+  let code = document.getElementById("couponInput").value
+  let now = new Date().getTime()
+
+  if(coupons[code]){
+
+    if(now > coupons[code].expires){
+      alert("Cupom expirado!")
+      return
+    }
+
+    let discount = coupons[code].discount
+    let finalPrice = price - (price * discount / 100)
+    document.getElementById("price").innerText = "R$ " + finalPrice.toFixed(2)
+
+    coupons[code].used++
+    localStorage.setItem("coupons", JSON.stringify(coupons))
+    updateCouponList()
+
+    alert("Cupom aplicado!")
+  } else {
+    alert("Cupom inválido")
+  }
 }
 
-// CUPOM CLIENTE
-function aplicarCupom(){
-let cupom = document.getElementById("cupomInput").value;
-let salvo = JSON.parse(localStorage.getItem("cupom"));
-
-if(salvo && cupom === salvo.nome){
-let desconto = salvo.desconto;
-let valorDesconto = precoOriginal * (desconto/100);
-precoAtual = precoOriginal - valorDesconto;
-
-document.getElementById("precoAntigo").innerText =
-"R$ " + precoOriginal.toFixed(2);
-
-atualizarPreco();
-alert("Cupom aplicado!");
-}else{
-alert("Cupom inválido!");
-}
+function openAdmin(){
+  document.getElementById("adminLogin").classList.remove("hidden")
 }
 
-// ADMIN
-document.addEventListener("keydown",function(e){
-if(e.ctrlKey && e.shiftKey && e.key==="A"){
-let senha = prompt("Senha admin:");
-if(senha==="admin123"){
-document.getElementById("adminPanel").style.display="flex";
-document.getElementById("totalCliques").innerText=
-localStorage.getItem("cliques");
-}else{
-alert("Senha incorreta");
-}
-}
-});
-
-function salvarCupom(){
-let nome = document.getElementById("novoCupom").value;
-let desconto = document.getElementById("descontoCupom").value;
-
-localStorage.setItem("cupom",JSON.stringify({
-nome:nome,
-desconto:parseFloat(desconto)
-}));
-
-alert("Cupom salvo!");
+function loginAdmin(){
+  let pass = document.getElementById("adminPass").value
+  if(pass === "1234"){ // TROQUE SUA SENHA
+    document.getElementById("adminLogin").classList.add("hidden")
+    document.getElementById("adminPanel").classList.remove("hidden")
+  } else {
+    alert("Senha incorreta")
+  }
 }
 
-function removerCupom(){
-localStorage.removeItem("cupom");
-alert("Cupom removido!");
+function logoutAdmin(){
+  document.getElementById("adminPanel").classList.add("hidden")
 }
 
-function fecharAdmin(){
-document.getElementById("adminPanel").style.display="none";
+function createCoupon(){
+  let name = document.getElementById("newCouponName").value
+  let value = document.getElementById("newCouponValue").value
+  let days = document.getElementById("newCouponDays").value
+
+  let expireDate = new Date().getTime() + (days * 24 * 60 * 60 * 1000)
+
+  coupons[name] = {
+    discount: parseInt(value),
+    used: 0,
+    expires: expireDate
+  }
+
+  localStorage.setItem("coupons", JSON.stringify(coupons))
+  updateCouponList()
+  alert("Cupom criado!")
+}
+
+function deleteCoupon(name){
+  delete coupons[name]
+  localStorage.setItem("coupons", JSON.stringify(coupons))
+  updateCouponList()
+}
+
+function updateCouponList(){
+  let list = document.getElementById("couponList")
+  list.innerHTML = ""
+
+  let now = new Date().getTime()
+
+  for(let code in coupons){
+
+    let status = now > coupons[code].expires ? " (Expirado)" : " (Ativo)"
+
+    list.innerHTML += `
+      <p>
+        ${code} - ${coupons[code].discount}% 
+        | Usado: ${coupons[code].used} vezes 
+        ${status}
+        <button onclick="deleteCoupon('${code}')">Remover</button>
+      </p>
+    `
+  }
 }
 
 </script>
