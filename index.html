@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Precinho Games</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: radial-gradient(circle at top, #1a0000 0%, #000000 60%);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
+body::after {
+  content: "";
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(rgba(255,0,0,0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+.card {
+  background: #111;
+  border-radius: 25px;
+  padding: 30px;
+  width: 360px;
+  text-align: center;
+  border: 2px solid #FF0000;
+  box-shadow: 0 0 40px rgba(255, 0, 0, 0.7);
+  position: relative;
+  animation: aparecer 0.8s ease;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 25px;
+  background: linear-gradient(45deg, #ff0000, #8b0000, #ff0000);
+  z-index: -1;
+  filter: blur(15px);
+  opacity: 0.7;
+}
+@keyframes aparecer { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+h1 { font-size: 24px; background: linear-gradient(90deg, #fff, #ff0000); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.sub { color: #aaa; font-size: 14px; margin-bottom: 15px; }
+.preco { font-size: 42px; font-weight: 800; color: #FF0000; text-shadow: 0 0 25px red; }
+.urgencia { margin: 10px 0; color: #FF2A2A; font-weight: bold; }
+#contador { font-size: 18px; margin-bottom: 20px; color: #fff; }
+.botao { background: linear-gradient(45deg, #FF0000, #8B0000); padding: 15px; border-radius: 15px; font-weight: bold; border: none; cursor: pointer; width: 100%; color: white; transition: 0.3s; box-shadow: 0 0 20px rgba(255,0,0,0.6); margin-bottom: 15px; }
+.botao:hover { transform: scale(1.07); box-shadow: 0 0 40px red; }
+#pagamento { display: none; text-align: center; margin-top: 20px; opacity: 0; transform: translateY(20px); transition: 0.5s; }
+.qr-box { padding: 15px; background: #000; border-radius: 20px; border: 2px solid red; box-shadow: 0 0 30px red; margin-bottom: 10px; }
+.qr-box img { width: 100%; border-radius: 10px; }
+.pix-btn { background: transparent; border: 2px solid red; color: red; padding: 10px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; margin-bottom: 10px; transition: 0.3s; }
+.pix-btn:hover { background: red; color: white; box-shadow: 0 0 20px red; }
+.info { font-size: 13px; color: #aaa; margin-bottom: 15px; }
+
+/* Painel admin */
+#adminPanel { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000c; color:white; justify-content:center; align-items:center; flex-direction:column; }
+#adminPanel h2 { margin-bottom:20px; }
+#adminPanel button { margin-top:10px; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🎮 Precinho Games</h1>
+  <div class="sub">Produto Digital • Envio Automático via WhatsApp</div>
+
+  <div class="preco">R$ 49,90</div>
+  <div class="urgencia">⚠ Oferta acaba em:</div>
+  <div id="contador">10:00</div>
+
+  <button class="botao" onclick="comprarAgora()">Comprar Agora</button>
+
+  <div id="pagamento">
+    <h3>Pague via Pix</h3>
+    <div class="qr-box">
+      <img id="qr" alt="QR Code Pix">
+    </div>
+    <button class="pix-btn" onclick="copiarPix()">Copiar chave Pix</button>
+    <div class="info">
+      Após o pagamento, envie o comprovante no WhatsApp.
+    </div>
+    <button class="botao" onclick="enviarComprovante()">Enviar Comprovante</button>
+  </div>
+</div>
+
+<!-- Painel Admin -->
+<div id="adminPanel">
+  <h2>Painel Admin</h2>
+  <div>Total de cliques em Comprar Agora: <span id="totalCliques">0</span></div>
+  <button onclick="fecharAdmin()">Fechar</button>
+</div>
+
+<script>
+// CONTADOR 10 MIN
+let tempo = 600;
+const contador = document.getElementById("contador");
+setInterval(() => {
+  let min = Math.floor(tempo / 60);
+  let seg = tempo % 60;
+  contador.innerHTML = `${min.toString().padStart(2,'0')}:${seg.toString().padStart(2,'0')}`;
+  if (tempo > 0) tempo--;
+}, 1000);
+
+// PIX CODE
+const pixCode = `00020126820014BR.GOV.BCB.PIX01367fdb18d2-069d-4454-8ec7-09f52ac4efdc0220obrigado por comprar520400005303986540549.905802BR5921Arthur Souza de Godoi6009SAO PAULO62140510ePQRZNqX8A6304CA0D`;
+
+// Registrar cliques (localStorage)
+if (!localStorage.getItem('cliquesComprar')) localStorage.setItem('cliquesComprar', '0');
+
+// FUNÇÃO COMPRAR
+function comprarAgora() {
+  // Incrementa contador
+  let cliques = parseInt(localStorage.getItem('cliquesComprar'));
+  cliques++;
+  localStorage.setItem('cliquesComprar', cliques);
+
+  // Mostrar pagamento
+  mostrarPagamento();
+}
+
+// MOSTRAR PAGAMENTO E GERAR QR
+function mostrarPagamento() {
+  const pagamento = document.getElementById("pagamento");
+  if (pagamento.style.display === "block") return;
+  pagamento.style.display = "block";
+  setTimeout(() => { pagamento.style.opacity = "1"; pagamento.style.transform = "translateY(0)"; }, 50);
+  pagamento.scrollIntoView({ behavior: "smooth" });
+
+  const qr = document.getElementById("qr");
+  qr.src = `https://chart.googleapis.com/chart?cht=qr&chl=${encodeURIComponent(pixCode)}&chs=300x300&chld=L|0`;
+}
+
+// COPIAR PIX
+function copiarPix() {
+  navigator.clipboard.writeText(pixCode).then(() => { alert("✅ Código Pix copiado!"); });
+}
+
+// WHATSAPP COMPROVANTE
+function enviarComprovante() {
+  window.open("https://wa.me/5566999761232?text=Estou%20enviando%20o%20comprovante%20de%20pagamento", "_blank");
+}
+
+// ABRIR PAINEL ADMIN (senha: admin123)
+function abrirAdmin() {
+  let senha = prompt("Digite a senha de admin:");
+  if (senha === "admin123") {
+    document.getElementById('adminPanel').style.display = 'flex';
+    document.getElementById('totalCliques').innerText = localStorage.getItem('cliquesComprar');
+  } else {
+    alert("Senha incorreta!");
+  }
+}
+
+// FECHAR PAINEL
+function fecharAdmin() {
+  document.getElementById('adminPanel').style.display = 'none';
+}
+
+// Para testar: clique com Ctrl+Shift+A abre o painel admin
+document.addEventListener('keydown', function(e){
+  if(e.ctrlKey && e.shiftKey && e.key === 'A'){
+    abrirAdmin();
+  }
+});
+</script>
+</body>
+</html>
