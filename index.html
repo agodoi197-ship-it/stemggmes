@@ -10,7 +10,7 @@
 body{
 margin:0;
 font-family:'Poppins',sans-serif;
-background:radial-gradient(circle at top,#1a0000,#000);
+background:linear-gradient(135deg,#0f0f0f,#1a0000);
 color:white;
 display:flex;
 justify-content:center;
@@ -22,20 +22,24 @@ height:100vh;
 background:#111;
 padding:30px;
 border-radius:20px;
-width:350px;
+width:380px;
 text-align:center;
 box-shadow:0 0 40px red;
 }
 
-h1{
-margin-bottom:10px;
-}
+h1{margin-bottom:10px;}
 
 .preco{
-font-size:38px;
+font-size:40px;
 color:#ff0000;
 font-weight:800;
-margin:15px 0;
+margin:10px 0;
+}
+
+.preco-antigo{
+text-decoration:line-through;
+color:#777;
+font-size:18px;
 }
 
 .botao{
@@ -47,39 +51,16 @@ color:white;
 font-weight:bold;
 border-radius:10px;
 cursor:pointer;
-margin-bottom:15px;
-transition:.3s;
-}
-
-.botao:hover{
-transform:scale(1.05);
-}
-
-#pagamento{
-display:none;
-margin-top:20px;
-}
-
-.qr-box{
-background:black;
-padding:10px;
-border-radius:15px;
-box-shadow:0 0 20px red;
 margin-bottom:10px;
 }
 
-.qr-box img{
-width:100%;
-}
+#pagamento{display:none;margin-top:20px;}
 
-.pix-btn{
-background:transparent;
-border:2px solid red;
-color:red;
+input{
 padding:10px;
+border-radius:8px;
+border:none;
 width:100%;
-border-radius:10px;
-cursor:pointer;
 margin-bottom:10px;
 }
 
@@ -90,11 +71,20 @@ top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.9);
+background:#000;
 color:white;
-justify-content:center;
-align-items:center;
 flex-direction:column;
+align-items:center;
+justify-content:center;
+}
+
+.admin-box{
+background:#111;
+padding:30px;
+border-radius:15px;
+width:350px;
+text-align:center;
+box-shadow:0 0 30px red;
 }
 </style>
 </head>
@@ -102,77 +92,124 @@ flex-direction:column;
 
 <div class="card">
 <h1>🎮 Precinho Games</h1>
-<div class="preco">R$ 49,90</div>
+
+<div id="precoArea">
+<div id="precoAntigo" class="preco-antigo"></div>
+<div id="preco" class="preco">R$ 49,90</div>
+</div>
+
+<input type="text" id="cupomInput" placeholder="Cupom de desconto">
+<button class="botao" onclick="aplicarCupom()">Aplicar Cupom</button>
 
 <button class="botao" onclick="comprarAgora()">Comprar Agora</button>
 
 <div id="pagamento">
 <h3>Pague via Pix</h3>
-
-<div class="qr-box">
-<img id="qr" alt="QR Code Pix">
-</div>
-
-<button class="pix-btn" onclick="copiarPix()">Copiar chave Pix</button>
-
-<button class="botao" onclick="enviarComprovante()">Enviar Comprovante</button>
+<img id="qr" width="200">
+<button class="botao" onclick="copiarPix()">Copiar Pix</button>
 </div>
 </div>
 
+<!-- PAINEL ADMIN -->
 <div id="adminPanel">
+<div class="admin-box">
 <h2>Painel Admin</h2>
-<p>Total de cliques em Comprar Agora:</p>
+
+<p>Total de Cliques:</p>
 <h1 id="totalCliques">0</h1>
+
+<hr>
+
+<h3>Criar / Atualizar Cupom</h3>
+<input type="text" id="novoCupom" placeholder="Nome do cupom">
+<input type="number" id="descontoCupom" placeholder="Desconto %">
+
+<button class="botao" onclick="salvarCupom()">Salvar Cupom</button>
+<button class="botao" onclick="removerCupom()">Remover Cupom</button>
+
+<br><br>
 <button class="botao" onclick="fecharAdmin()">Fechar</button>
+</div>
 </div>
 
 <script>
 
-// SUA CHAVE PIX
 const pixCode = `00020126820014BR.GOV.BCB.PIX01367fdb18d2-069d-4454-8ec7-09f52ac4efdc0220obrigado por comprar520400005303986540549.905802BR5921Arthur Souza de Godoi6009SAO PAULO62140510ePQRZNqX8A6304CA0D`;
 
-// INICIAR CONTADOR
-if(!localStorage.getItem("cliquesComprar")){
-localStorage.setItem("cliquesComprar","0");
+let precoOriginal = 49.90;
+let precoAtual = precoOriginal;
+
+// INICIAR
+if(!localStorage.getItem("cliques")) localStorage.setItem("cliques","0");
+
+function atualizarPreco(){
+document.getElementById("preco").innerText = "R$ " + precoAtual.toFixed(2);
 }
 
 function comprarAgora(){
-let cliques=parseInt(localStorage.getItem("cliquesComprar"));
-cliques++;
-localStorage.setItem("cliquesComprar",cliques);
+let c = parseInt(localStorage.getItem("cliques"));
+localStorage.setItem("cliques",c+1);
 
-mostrarPagamento();
-}
-
-function mostrarPagamento(){
-const pagamento=document.getElementById("pagamento");
-pagamento.style.display="block";
-
-const qr=document.getElementById("qr");
-qr.src=`https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(pixCode)}`;
+document.getElementById("pagamento").style.display="block";
+document.getElementById("qr").src=
+`https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(pixCode)}`;
 }
 
 function copiarPix(){
 navigator.clipboard.writeText(pixCode);
-alert("✅ Pix copiado!");
+alert("Pix copiado!");
 }
 
-function enviarComprovante(){
-window.open("https://wa.me/5566999761232?text=Estou%20enviando%20o%20comprovante%20de%20pagamento","_blank");
+// CUPOM CLIENTE
+function aplicarCupom(){
+let cupom = document.getElementById("cupomInput").value;
+let salvo = JSON.parse(localStorage.getItem("cupom"));
+
+if(salvo && cupom === salvo.nome){
+let desconto = salvo.desconto;
+let valorDesconto = precoOriginal * (desconto/100);
+precoAtual = precoOriginal - valorDesconto;
+
+document.getElementById("precoAntigo").innerText =
+"R$ " + precoOriginal.toFixed(2);
+
+atualizarPreco();
+alert("Cupom aplicado!");
+}else{
+alert("Cupom inválido!");
+}
 }
 
-// ABRIR ADMIN
+// ADMIN
 document.addEventListener("keydown",function(e){
 if(e.ctrlKey && e.shiftKey && e.key==="A"){
-let senha=prompt("Digite a senha:");
+let senha = prompt("Senha admin:");
 if(senha==="admin123"){
 document.getElementById("adminPanel").style.display="flex";
-document.getElementById("totalCliques").innerText=localStorage.getItem("cliquesComprar");
+document.getElementById("totalCliques").innerText=
+localStorage.getItem("cliques");
 }else{
-alert("Senha incorreta!");
+alert("Senha incorreta");
 }
 }
 });
+
+function salvarCupom(){
+let nome = document.getElementById("novoCupom").value;
+let desconto = document.getElementById("descontoCupom").value;
+
+localStorage.setItem("cupom",JSON.stringify({
+nome:nome,
+desconto:parseFloat(desconto)
+}));
+
+alert("Cupom salvo!");
+}
+
+function removerCupom(){
+localStorage.removeItem("cupom");
+alert("Cupom removido!");
+}
 
 function fecharAdmin(){
 document.getElementById("adminPanel").style.display="none";
