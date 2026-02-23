@@ -144,14 +144,33 @@ let precoOriginal = 49.90;
 let precoAtual = precoOriginal;
 
 if(!localStorage.getItem("cliques")) localStorage.setItem("cliques","0");
+if(!localStorage.getItem("historico")) localStorage.setItem("historico",JSON.stringify([]));
+
+let bloqueioCompra = false;
 
 function atualizarPreco(){
 document.getElementById("preco").innerText = "R$ " + precoAtual.toFixed(2);
 }
 
 function comprarAgora(){
+
+if(bloqueioCompra){
+alert("Aguarde alguns segundos antes de clicar novamente.");
+return;
+}
+
+bloqueioCompra = true;
+setTimeout(()=>{bloqueioCompra=false},4000);
+
 let c = parseInt(localStorage.getItem("cliques"));
 localStorage.setItem("cliques",c+1);
+
+let historico = JSON.parse(localStorage.getItem("historico"));
+historico.push({
+data:new Date().toLocaleString(),
+valor:precoAtual
+});
+localStorage.setItem("historico",JSON.stringify(historico));
 
 document.getElementById("pagamento").style.display="block";
 document.getElementById("qr").src=
@@ -163,7 +182,6 @@ navigator.clipboard.writeText(pixCode);
 alert("Pix copiado!");
 }
 
-// CUPOM CLIENTE
 function aplicarCupom(){
 let cupom = document.getElementById("cupomInput").value;
 let salvo = JSON.parse(localStorage.getItem("cupom"));
@@ -184,6 +202,9 @@ localStorage.removeItem("cupom");
 document.getElementById("contadorTempo").innerText="";
 return;
 }
+
+salvo.usos = (salvo.usos || 0) + 1;
+localStorage.setItem("cupom",JSON.stringify(salvo));
 
 let desconto = salvo.desconto;
 let valorDesconto = precoOriginal * (desconto/100);
@@ -220,7 +241,6 @@ document.getElementById("contadorTempo").innerText =
 },1000);
 }
 
-// ADMIN
 document.addEventListener("keydown",function(e){
 if(e.ctrlKey && e.shiftKey && e.key==="A"){
 let senha = prompt("Senha admin:");
@@ -230,6 +250,30 @@ document.getElementById("totalCliques").innerText=
 localStorage.getItem("cliques");
 }else{
 alert("Senha incorreta");
+}
+}
+
+if(e.ctrlKey && e.shiftKey && e.key==="H"){
+let senha = prompt("Senha admin:");
+if(senha==="admin123"){
+let historico = JSON.parse(localStorage.getItem("historico"));
+let texto="HISTÓRICO\n\n";
+historico.forEach((h,i)=>{
+texto+=(i+1)+") "+h.data+" - R$ "+h.valor+"\n";
+});
+alert(texto);
+}
+}
+
+if(e.ctrlKey && e.shiftKey && e.key==="C"){
+let senha = prompt("Senha admin:");
+if(senha==="admin123"){
+let salvo = JSON.parse(localStorage.getItem("cupom"));
+if(salvo){
+alert("Cupom: "+salvo.nome+
+"\nDesconto: "+salvo.desconto+"%"+
+"\nUsos: "+(salvo.usos||0));
+}
 }
 }
 });
@@ -242,7 +286,8 @@ let horas = document.getElementById("duracaoHoras").value;
 localStorage.setItem("cupom",JSON.stringify({
 nome:nome,
 desconto:parseFloat(desconto),
-expira: Date.now() + (horas * 3600000)
+expira: Date.now() + (horas * 3600000),
+usos:0
 }));
 
 alert("Cupom salvo com duração em horas!");
