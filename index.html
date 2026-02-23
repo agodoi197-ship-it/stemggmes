@@ -6,174 +6,152 @@
 <title>Steam no Precinho</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-
 body{
-    font-family: Arial, sans-serif;
-    background: radial-gradient(circle at top, #111, #000);
-    height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    background:#0f0f0f;
     color:white;
-}
-
-.card{
-    background:#121212;
-    width:400px;
-    padding:35px;
-    border-radius:20px;
-    box-shadow:0 0 50px rgba(0,255,120,0.15);
+    font-family:Arial;
     text-align:center;
+    padding-top:50px;
 }
 
-h1{
-    color:#00ff88;
-    margin-bottom:15px;
-}
-
-.preco{
-    font-size:30px;
-    font-weight:bold;
-    margin:15px 0;
-}
-
-input{
-    width:100%;
-    padding:10px;
-    margin:6px 0;
-    border-radius:8px;
-    border:none;
+.container{
+    background:#1c1c1c;
+    padding:30px;
+    width:350px;
+    margin:auto;
+    border-radius:15px;
 }
 
 button{
+    padding:10px;
+    margin-top:10px;
     width:100%;
-    padding:12px;
-    margin-top:8px;
-    border:none;
-    border-radius:10px;
     background:#00ff88;
+    border:none;
+    border-radius:8px;
     font-weight:bold;
     cursor:pointer;
 }
 
-button:hover{
-    background:#00cc66;
+input{
+    width:100%;
+    padding:8px;
+    margin-top:8px;
+    border-radius:6px;
+    border:none;
 }
 
-#pixArea{display:none;margin-top:15px;}
-#admin{display:none;margin-top:20px;background:#1e1e1e;padding:15px;border-radius:15px;}
-#cuponsLista{margin-top:10px;font-size:13px;color:#00ff88;}
-#tempoRestante{font-size:14px;margin-top:8px;color:#00ff88;}
+#pixArea{
+    display:none;
+    margin-top:15px;
+}
+
+#admin{
+    display:none;
+    margin-top:20px;
+    background:#111;
+    padding:15px;
+    border-radius:10px;
+}
 </style>
 </head>
 <body>
 
-<div class="card">
+<div class="container">
 
 <h1>Steam no Precinho</h1>
 
-<div class="preco" id="preco">R$ 49,90</div>
+<h2 id="preco">R$ 49,90</h2>
 
 <input type="text" id="cupomInput" placeholder="Cupom">
-<button onclick="aplicarCupom()">Aplicar Cupom</button>
+<button id="btnCupom">Aplicar Cupom</button>
 
-<div id="tempoRestante"></div>
+<p id="contador"></p>
 
-<button onclick="comprar()">Comprar Agora</button>
+<button id="btnComprar">Comprar Agora</button>
 
 <div id="pixArea">
-    <p><b>Chave Pix:</b></p>
-    <p id="chavePix">7fdb18d2-069d-4454-8ec7-09f52ac4efdc</p>
-    <button onclick="copiarPix()">Copiar</button>
+    <p>Chave Pix:</p>
+    <p id="pix">7fdb18d2-069d-4454-8ec7-09f52ac4efdc</p>
+    <button id="btnCopiar">Copiar Pix</button>
 </div>
 
-<!-- ADMIN -->
 <div id="admin">
     <h3>Painel Admin</h3>
-    <p>Total cliques: <span id="cliques">0</span></p>
-
-    <input type="text" id="novoCodigo" placeholder="Nome do cupom">
-    <input type="number" id="novoDesconto" placeholder="% desconto">
-    <input type="number" id="novaDuracao" placeholder="Duração (horas)">
-    <button onclick="criarCupom()">Criar Cupom</button>
-
-    <div id="cuponsLista"></div>
+    <input type="text" id="codigoNovo" placeholder="Código">
+    <input type="number" id="descontoNovo" placeholder="% desconto">
+    <input type="number" id="horasNovo" placeholder="Duração (horas)">
+    <button id="btnCriar">Criar Cupom</button>
 </div>
 
 </div>
 
 <script>
+
 let precoOriginal = 49.90;
-let cupons = [];
-let totalCliques = 0;
+let cupomAtivo = null;
 
-function comprar(){
-    totalCliques++;
-    document.getElementById("cliques").innerText = totalCliques;
+document.getElementById("btnComprar").onclick = function(){
     document.getElementById("pixArea").style.display="block";
-}
+};
 
-function copiarPix(){
-    let chave = document.getElementById("chavePix").innerText;
-    navigator.clipboard.writeText(chave);
-    alert("Copiado!");
-}
+document.getElementById("btnCopiar").onclick = function(){
+    let texto = document.getElementById("pix").innerText;
+    navigator.clipboard.writeText(texto);
+    alert("Pix copiado!");
+};
 
-function criarCupom(){
-    let codigo = document.getElementById("novoCodigo").value;
-    let desconto = parseFloat(document.getElementById("novoDesconto").value);
-    let duracao = parseFloat(document.getElementById("novaDuracao").value);
+document.getElementById("btnCriar").onclick = function(){
+    let codigo = document.getElementById("codigoNovo").value;
+    let desconto = parseFloat(document.getElementById("descontoNovo").value);
+    let horas = parseFloat(document.getElementById("horasNovo").value);
 
-    let cupom = {
-        codigo,
-        desconto,
-        expira: Date.now() + (duracao * 60 * 60 * 1000)
+    cupomAtivo = {
+        codigo: codigo,
+        desconto: desconto,
+        expira: Date.now() + (horas * 3600000)
     };
 
-    cupons.push(cupom);
-    atualizarLista();
-}
+    alert("Cupom criado!");
+};
 
-function atualizarLista(){
-    let lista = "";
-    cupons.forEach(c=>{
-        lista += Cupom: ${c.codigo} - ${c.desconto}%<br>;
-    });
-    document.getElementById("cuponsLista").innerHTML = lista;
-}
+document.getElementById("btnCupom").onclick = function(){
 
-function aplicarCupom(){
-    let codigoDigitado = document.getElementById("cupomInput").value;
+    let digitado = document.getElementById("cupomInput").value;
 
-    let cupom = cupons.find(c => c.codigo === codigoDigitado);
-
-    if(!cupom){
-        alert("Cupom inválido");
+    if(!cupomAtivo){
+        alert("Nenhum cupom criado.");
         return;
     }
 
-    if(Date.now() > cupom.expira){
-        alert("Cupom expirado");
+    if(digitado !== cupomAtivo.codigo){
+        alert("Cupom inválido.");
         return;
     }
 
-    let desconto = precoOriginal * (cupom.desconto/100);
+    if(Date.now() > cupomAtivo.expira){
+        alert("Cupom expirado.");
+        return;
+    }
+
+    let desconto = precoOriginal * (cupomAtivo.desconto/100);
     let novoPreco = (precoOriginal - desconto).toFixed(2);
 
     document.getElementById("preco").innerText = "R$ " + novoPreco;
 
-    iniciarContador(cupom.expira);
-}
+    iniciarContador(cupomAtivo.expira);
+};
 
 function iniciarContador(expira){
-    let intervalo = setInterval(()=>{
+
+    let intervalo = setInterval(function(){
+
         let restante = expira - Date.now();
 
         if(restante <= 0){
             clearInterval(intervalo);
-            document.getElementById("tempoRestante").innerText="Cupom expirado";
-            document.getElementById("preco").innerText="R$ 49,90";
+            document.getElementById("contador").innerText = "Cupom expirado";
+            document.getElementById("preco").innerText = "R$ 49,90";
             return;
         }
 
@@ -181,20 +159,22 @@ function iniciarContador(expira){
         let m = Math.floor((restante%3600000)/60000);
         let s = Math.floor((restante%60000)/1000);
 
-        document.getElementById("tempoRestante").innerText=
-        Expira em ${h}h ${m}m ${s}s;
+        document.getElementById("contador").innerText =
+        "Expira em: " + h + "h " + m + "m " + s + "s";
+
     },1000);
 }
 
-/* abrir admin com Ctrl + Shift + A */
+/* abrir admin */
 document.addEventListener("keydown", function(e){
     if(e.ctrlKey && e.shiftKey && e.key==="A"){
         let senha = prompt("Senha:");
-        if(senha==="Brasil"){
+        if(senha==="1234"){
             document.getElementById("admin").style.display="block";
         }
     }
 });
+
 </script>
 
 </body>
