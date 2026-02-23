@@ -1,179 +1,261 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Steam no Precinho</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
 
 <style>
 body{
-    background:#0f0f0f;
-    color:white;
-    font-family:Arial;
-    text-align:center;
-    padding-top:50px;
+margin:0;
+font-family:'Poppins',sans-serif;
+background:linear-gradient(135deg,#0f0f0f,#1a0000);
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 }
 
-.container{
-    background:#1c1c1c;
-    padding:30px;
-    width:350px;
-    margin:auto;
-    border-radius:15px;
+.card{
+background:#111;
+padding:30px;
+border-radius:20px;
+width:380px;
+text-align:center;
+box-shadow:0 0 40px red;
 }
 
-button{
-    padding:10px;
-    margin-top:10px;
-    width:100%;
-    background:#00ff88;
-    border:none;
-    border-radius:8px;
-    font-weight:bold;
-    cursor:pointer;
+h1{margin-bottom:10px;}
+
+.preco{
+font-size:40px;
+color:#ff0000;
+font-weight:800;
+margin:10px 0;
 }
+
+.preco-antigo{
+text-decoration:line-through;
+color:#777;
+font-size:18px;
+}
+
+.botao{
+background:linear-gradient(45deg,#ff0000,#8b0000);
+border:none;
+padding:15px;
+width:100%;
+color:white;
+font-weight:bold;
+border-radius:10px;
+cursor:pointer;
+margin-bottom:10px;
+}
+
+#pagamento{display:none;margin-top:20px;}
+#contadorTempo{margin-top:10px;color:#00ff88;font-size:14px;}
 
 input{
-    width:100%;
-    padding:8px;
-    margin-top:8px;
-    border-radius:6px;
-    border:none;
+padding:10px;
+border-radius:8px;
+border:none;
+width:100%;
+margin-bottom:10px;
 }
 
-#pixArea{
-    display:none;
-    margin-top:15px;
+#adminPanel{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#000;
+color:white;
+flex-direction:column;
+align-items:center;
+justify-content:center;
 }
 
-#admin{
-    display:none;
-    margin-top:20px;
-    background:#111;
-    padding:15px;
-    border-radius:10px;
+.admin-box{
+background:#111;
+padding:30px;
+border-radius:15px;
+width:350px;
+text-align:center;
+box-shadow:0 0 30px red;
 }
 </style>
 </head>
 <body>
 
-<div class="container">
+<div class="card">
+<h1>🎮 Steam no Precinho</h1>
 
-<h1>Steam no Precinho</h1>
-
-<h2 id="preco">R$ 49,90</h2>
-
-<input type="text" id="cupomInput" placeholder="Cupom">
-<button id="btnCupom">Aplicar Cupom</button>
-
-<p id="contador"></p>
-
-<button id="btnComprar">Comprar Agora</button>
-
-<div id="pixArea">
-    <p>Chave Pix:</p>
-    <p id="pix">7fdb18d2-069d-4454-8ec7-09f52ac4efdc</p>
-    <button id="btnCopiar">Copiar Pix</button>
+<div id="precoArea">
+<div id="precoAntigo" class="preco-antigo"></div>
+<div id="preco" class="preco">R$ 49,90</div>
 </div>
 
-<div id="admin">
-    <h3>Painel Admin</h3>
-    <input type="text" id="codigoNovo" placeholder="Código">
-    <input type="number" id="descontoNovo" placeholder="% desconto">
-    <input type="number" id="horasNovo" placeholder="Duração (horas)">
-    <button id="btnCriar">Criar Cupom</button>
+<input type="text" id="cupomInput" placeholder="Cupom de desconto">
+<button class="botao" onclick="aplicarCupom()">Aplicar Cupom</button>
+
+<div id="contadorTempo"></div>
+
+<button class="botao" onclick="comprarAgora()">Comprar Agora</button>
+
+<div id="pagamento">
+<h3>Pague via Pix</h3>
+<img id="qr" width="200">
+<button class="botao" onclick="copiarPix()">Copiar Pix</button>
+</div>
 </div>
 
+<!-- PAINEL ADMIN -->
+<div id="adminPanel">
+<div class="admin-box">
+<h2>Painel Admin</h2>
+
+<p>Total de Cliques:</p>
+<h1 id="totalCliques">0</h1>
+
+<hr>
+
+<h3>Criar / Atualizar Cupom</h3>
+<input type="text" id="novoCupom" placeholder="Nome do cupom">
+<input type="number" id="descontoCupom" placeholder="Desconto %">
+<input type="number" id="duracaoHoras" placeholder="Duração (horas)">
+
+<button class="botao" onclick="salvarCupom()">Salvar Cupom</button>
+<button class="botao" onclick="removerCupom()">Remover Cupom</button>
+
+<br><br>
+<button class="botao" onclick="fecharAdmin()">Fechar</button>
+</div>
 </div>
 
 <script>
 
+const pixCode = `00020126820014BR.GOV.BCB.PIX01367fdb18d2-069d-4454-8ec7-09f52ac4efdc0220obrigado por comprar520400005303986540549.905802BR5921Arthur Souza de Godoi6009SAO PAULO62140510ePQRZNqX8A6304CA0D`;
+
 let precoOriginal = 49.90;
-let cupomAtivo = null;
+let precoAtual = precoOriginal;
 
-document.getElementById("btnComprar").onclick = function(){
-    document.getElementById("pixArea").style.display="block";
-};
+if(!localStorage.getItem("cliques")) localStorage.setItem("cliques","0");
 
-document.getElementById("btnCopiar").onclick = function(){
-    let texto = document.getElementById("pix").innerText;
-    navigator.clipboard.writeText(texto);
-    alert("Pix copiado!");
-};
-
-document.getElementById("btnCriar").onclick = function(){
-    let codigo = document.getElementById("codigoNovo").value;
-    let desconto = parseFloat(document.getElementById("descontoNovo").value);
-    let horas = parseFloat(document.getElementById("horasNovo").value);
-
-    cupomAtivo = {
-        codigo: codigo,
-        desconto: desconto,
-        expira: Date.now() + (horas * 3600000)
-    };
-
-    alert("Cupom criado!");
-};
-
-document.getElementById("btnCupom").onclick = function(){
-
-    let digitado = document.getElementById("cupomInput").value;
-
-    if(!cupomAtivo){
-        alert("Nenhum cupom criado.");
-        return;
-    }
-
-    if(digitado !== cupomAtivo.codigo){
-        alert("Cupom inválido.");
-        return;
-    }
-
-    if(Date.now() > cupomAtivo.expira){
-        alert("Cupom expirado.");
-        return;
-    }
-
-    let desconto = precoOriginal * (cupomAtivo.desconto/100);
-    let novoPreco = (precoOriginal - desconto).toFixed(2);
-
-    document.getElementById("preco").innerText = "R$ " + novoPreco;
-
-    iniciarContador(cupomAtivo.expira);
-};
-
-function iniciarContador(expira){
-
-    let intervalo = setInterval(function(){
-
-        let restante = expira - Date.now();
-
-        if(restante <= 0){
-            clearInterval(intervalo);
-            document.getElementById("contador").innerText = "Cupom expirado";
-            document.getElementById("preco").innerText = "R$ 49,90";
-            return;
-        }
-
-        let h = Math.floor(restante/3600000);
-        let m = Math.floor((restante%3600000)/60000);
-        let s = Math.floor((restante%60000)/1000);
-
-        document.getElementById("contador").innerText =
-        "Expira em: " + h + "h " + m + "m " + s + "s";
-
-    },1000);
+function atualizarPreco(){
+document.getElementById("preco").innerText = "R$ " + precoAtual.toFixed(2);
 }
 
-/* abrir admin */
-document.addEventListener("keydown", function(e){
-    if(e.ctrlKey && e.shiftKey && e.key==="A"){
-        let senha = prompt("Senha:");
-        if(senha==="1234"){
-            document.getElementById("admin").style.display="block";
-        }
-    }
+function comprarAgora(){
+let c = parseInt(localStorage.getItem("cliques"));
+localStorage.setItem("cliques",c+1);
+
+document.getElementById("pagamento").style.display="block";
+document.getElementById("qr").src=
+`https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(pixCode)}`;
+}
+
+function copiarPix(){
+navigator.clipboard.writeText(pixCode);
+alert("Pix copiado!");
+}
+
+// CUPOM CLIENTE
+function aplicarCupom(){
+let cupom = document.getElementById("cupomInput").value;
+let salvo = JSON.parse(localStorage.getItem("cupom"));
+
+if(!salvo){
+alert("Nenhum cupom ativo!");
+return;
+}
+
+if(cupom !== salvo.nome){
+alert("Cupom inválido!");
+return;
+}
+
+if(Date.now() > salvo.expira){
+alert("Cupom expirado!");
+localStorage.removeItem("cupom");
+document.getElementById("contadorTempo").innerText="";
+return;
+}
+
+let desconto = salvo.desconto;
+let valorDesconto = precoOriginal * (desconto/100);
+precoAtual = precoOriginal - valorDesconto;
+
+document.getElementById("precoAntigo").innerText =
+"R$ " + precoOriginal.toFixed(2);
+
+atualizarPreco();
+iniciarContador(salvo.expira);
+alert("Cupom aplicado!");
+}
+
+function iniciarContador(expira){
+let intervalo = setInterval(function(){
+let restante = expira - Date.now();
+
+if(restante <= 0){
+clearInterval(intervalo);
+document.getElementById("contadorTempo").innerText="Cupom expirado";
+precoAtual = precoOriginal;
+atualizarPreco();
+document.getElementById("precoAntigo").innerText="";
+return;
+}
+
+let h = Math.floor(restante/3600000);
+let m = Math.floor((restante%3600000)/60000);
+let s = Math.floor((restante%60000)/1000);
+
+document.getElementById("contadorTempo").innerText =
+"Expira em: " + h + "h " + m + "m " + s + "s";
+
+},1000);
+}
+
+// ADMIN
+document.addEventListener("keydown",function(e){
+if(e.ctrlKey && e.shiftKey && e.key==="A"){
+let senha = prompt("Senha admin:");
+if(senha==="admin123"){
+document.getElementById("adminPanel").style.display="flex";
+document.getElementById("totalCliques").innerText=
+localStorage.getItem("cliques");
+}else{
+alert("Senha incorreta");
+}
+}
 });
+
+function salvarCupom(){
+let nome = document.getElementById("novoCupom").value;
+let desconto = document.getElementById("descontoCupom").value;
+let horas = document.getElementById("duracaoHoras").value;
+
+localStorage.setItem("cupom",JSON.stringify({
+nome:nome,
+desconto:parseFloat(desconto),
+expira: Date.now() + (horas * 3600000)
+}));
+
+alert("Cupom salvo com duração em horas!");
+}
+
+function removerCupom(){
+localStorage.removeItem("cupom");
+alert("Cupom removido!");
+}
+
+function fecharAdmin(){
+document.getElementById("adminPanel").style.display="none";
+}
 
 </script>
 
